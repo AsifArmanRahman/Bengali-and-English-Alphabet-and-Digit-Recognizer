@@ -8,7 +8,16 @@ from PIL import Image, ImageDraw
 from tensorflow.keras.models import load_model
 
 
-def select_model(language, type):
+def image_load():
+    img = cv2.imread('img/temp/temp.png', 0)
+    img = cv2.bitwise_not(img)
+    img = cv2.resize(img, (28, 28)).reshape(1, 28, 28, 1).astype('float32')
+    img /= 255.0
+
+    return img
+
+
+def prediction(language, type):
     model = None
 
     if language == 'eng':
@@ -23,22 +32,7 @@ def select_model(language, type):
         elif type == 'digit':
             model = load_model('models/output/B_D.h5')
 
-    return model
-
-
-def testing(language, type):
-    """
-        This method loads the models of english and bengali depending
-        on which one is select through the method parameter.
-    """
-
-    img = cv2.imread('img/temp/temp.png', 0)
-    img = cv2.bitwise_not(img)
-    img = cv2.resize(img, (28, 28)).reshape(1, 28, 28, 1).astype('float32')
-    img /= 255.0
-
-    model = select_model(language, type)
-    predict = model.predict(img)
+    predict = model.predict(image_load())
 
     return predict
 
@@ -48,7 +42,7 @@ class App:
         # Full Window
         self.root = Tk()
         self.root.configure(bg='black')
-        self.root.title('Digit Recognizer')
+        self.root.title('Handwritten Alphabet and Digit Recognizer')
         self.root.resizable(0, 0)
         self.root.geometry('400x630')
 
@@ -122,7 +116,7 @@ class App:
         self.cleanButton = Button(self.bottomFrame, text='Clean', command=self.clean)
         self.cleanButton.grid(row=0)
 
-        self.predictButton = Button(self.bottomFrame, text='Recognize', command=self.prediction)
+        self.predictButton = Button(self.bottomFrame, text='Recognize', command=self.predict)
         self.predictButton.grid(row=0, column=1, padx=20)
 
         self.saveButton = Button(self.bottomFrame, text=' Save ', command=self.save)
@@ -169,7 +163,7 @@ class App:
         filename = 'img/temp/temp.png'
         self.image1.save(filename)
 
-        predict = testing(self.switch_variable1.get(), self.switch_variable2.get())
+        predict = prediction(self.switch_variable1.get(), self.switch_variable2.get())
 
         if self.switch_variable2.get() == 'digit':
             if self.switch_variable1.get() == 'eng':
@@ -183,9 +177,10 @@ class App:
                 classes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
                            'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
             elif self.switch_variable1.get() == 'ben':
-                classes = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'অ', 'আ', 'ই', 'ঈ', 'উ', 'ঊ', 'ঋ', 'এ', 'ঐ', 'ও', 'ঔ', 'ক', 'খ', 'গ', 'ঘ', 'ঙ', 'চ',
-                           'ছ', 'জ', 'ঝ', 'ঞ', 'ট', 'ঠ', 'ড', 'ঢ', 'ণ', 'ত', 'থ', 'দ', 'ধ', 'ন', 'প', 'ফ', 'ব', 'ভ',
-                           'ম', 'য', 'র', 'ল', 'শ', 'ষ', 'স', 'হ', 'ড়', 'ঢ়', 'য়', 'ৎ', 'ং', 'ঃ', ' ঁ']
+                classes = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'অ', 'আ', 'ই', 'ঈ', 'উ', 'ঊ', 'ঋ', 'এ',
+                           'ঐ', 'ও', 'ঔ', 'ক', 'খ', 'গ', 'ঘ', 'ঙ', 'চ', 'ছ', 'জ', 'ঝ', 'ঞ', 'ট', 'ঠ', 'ড', 'ঢ', 'ণ',
+                           'ত', 'থ', 'দ', 'ধ', 'ন', 'প', 'ফ', 'ব', 'ভ', 'ম', 'য', 'র', 'ল', 'শ', 'ষ', 'স', 'হ', 'ড়',
+                           'ঢ়', 'য়', 'ৎ', 'ং', 'ঃ', ' ঁ']
 
         print('Digit', np.argmax(predict[0]), '\nAccuracy', predict[0][np.argmax(predict[0])],
               classes[np.argmax(predict[0])])
@@ -194,7 +189,7 @@ class App:
                                                 round(predict[0][np.argmax(predict[0])] * 100, 3))
         self.predictLabel.config(text=txt)
 
-    def prediction(self):
+    def predict(self):
         for x in range(5):
             self.progressBar['value'] += 20
             self.middleFrame.update_idletasks()
