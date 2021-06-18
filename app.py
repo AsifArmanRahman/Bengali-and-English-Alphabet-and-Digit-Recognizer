@@ -8,20 +8,25 @@ from PIL import Image, ImageDraw
 from tensorflow.keras.models import load_model
 
 
-def select_model(language):
-
+def select_model(language, type):
     model = None
 
     if language == 'eng':
-        model = load_model('models/output/E_D_9944.h5')
+        if type == 'alphabet':
+            model = load_model('models/output/E_A.h5')
+        elif type == 'digit':
+            model = load_model('models/output/E_D.h5')
 
     elif language == 'ben':
-        model = load_model('models/output/numtabd.h5')
+        if type == 'alphabet':
+            model = load_model('models/output/B_A.h5')
+        elif type == 'digit':
+            model = load_model('models/output/B_D.h5')
 
     return model
 
 
-def testing(language):
+def testing(language, type):
     """
         This method loads the models of english and bengali depending
         on which one is select through the method parameter.
@@ -32,7 +37,7 @@ def testing(language):
     img = cv2.resize(img, (28, 28)).reshape(1, 28, 28, 1).astype('float32')
     img /= 255.0
 
-    model = select_model(language)
+    model = select_model(language, type)
     predict = model.predict(img)
 
     return predict
@@ -45,7 +50,7 @@ class App:
         self.root.configure(bg='black')
         self.root.title('Digit Recognizer')
         self.root.resizable(0, 0)
-        self.root.geometry('400x600')
+        self.root.geometry('400x630')
 
         icon = PhotoImage(file='img/icon/icon.png')
         self.root.iconphoto(False, icon)
@@ -56,17 +61,32 @@ class App:
         # Layer 1
         ###############
 
-        self.switch_frame = Frame(self.root)
-        self.switch_frame.pack(anchor='e', padx=10, pady=10)
+        self.switch_frame1 = Frame(self.root)
+        self.switch_frame1.pack(anchor='e', padx=10, pady=10)
 
-        self.switch_variable = StringVar(value="eng")
-        self.eng_button = Radiobutton(self.switch_frame, text="English", variable=self.switch_variable,
+        self.switch_variable1 = StringVar(value="eng")
+        self.eng_button = Radiobutton(self.switch_frame1, text="English", variable=self.switch_variable1,
                                       indicatoron=False, value="eng", width=8)
-        self.ben_button = Radiobutton(self.switch_frame, text="Bengali", variable=self.switch_variable,
+        self.ben_button = Radiobutton(self.switch_frame1, text="Bengali", variable=self.switch_variable1,
                                       indicatoron=False, value="ben", width=8)
 
         self.eng_button.pack(side="left")
         self.ben_button.pack(side="left")
+
+        # Layer 1 - 1
+        ###############
+
+        self.switch_frame2 = Frame(self.root)
+        self.switch_frame2.pack(anchor='w', padx=10, pady=0)
+
+        self.switch_variable2 = StringVar(value="alphabet")
+        self.alpha_button = Radiobutton(self.switch_frame2, text="Alphabet", variable=self.switch_variable2,
+                                        indicatoron=False, value="alphabet", width=8)
+        self.digit_button = Radiobutton(self.switch_frame2, text="Digit", variable=self.switch_variable2,
+                                        indicatoron=False, value="digit", width=8)
+
+        self.alpha_button.pack(side="left")
+        self.digit_button.pack(side="left")
 
         # Layer 2
         ###############
@@ -149,9 +169,23 @@ class App:
         filename = 'img/temp/temp.png'
         self.image1.save(filename)
 
-        predict = testing(self.switch_variable.get())
+        predict = testing(self.switch_variable1.get(), self.switch_variable2.get())
 
-        classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        if self.switch_variable2.get() == 'digit':
+            if self.switch_variable1.get() == 'eng':
+                classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+            elif self.switch_variable1.get() == 'ben':
+                classes = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
+
+        elif self.switch_variable2.get() == 'alphabet':
+            if self.switch_variable1.get() == 'eng':
+                classes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+                           'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+            elif self.switch_variable1.get() == 'ben':
+                classes = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'অ', 'আ', 'ই', 'ঈ', 'উ', 'ঊ', 'ঋ', 'এ', 'ঐ', 'ও', 'ঔ', 'ক', 'খ', 'গ', 'ঘ', 'ঙ', 'চ',
+                           'ছ', 'জ', 'ঝ', 'ঞ', 'ট', 'ঠ', 'ড', 'ঢ', 'ণ', 'ত', 'থ', 'দ', 'ধ', 'ন', 'প', 'ফ', 'ব', 'ভ',
+                           'ম', 'য', 'র', 'ল', 'শ', 'ষ', 'স', 'হ', 'ড়', 'ঢ়', 'য়', 'ৎ', 'ং', 'ঃ', ' ঁ']
 
         print('Digit', np.argmax(predict[0]), '\nAccuracy', predict[0][np.argmax(predict[0])],
               classes[np.argmax(predict[0])])
